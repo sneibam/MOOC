@@ -1,0 +1,61 @@
+---
+title: "Logistic Regression"
+author: "Sneiba"
+date: "11/24/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Binary classification is the most basic task in machine learning, and yet the most frequent.
+Binary classifiers often serve as the foundation for many high tech ML applications such as
+ad placement, feed ranking, spam filtering, and recommendation systems.
+Logistic Regression is one of the most common binary classification algorithm used.
+
+## Definition
+
+We have a vector of measurements $x = (x_1, x_2, x_3, ..., x_d)$. The response variable, or the binary variable we're trying to predict,
+is going to be denoted by $y = +1$ or $y = -1$ that indicates yes or no.
+We are going to have another vector $\theta = (\theta_1, \theta_2, \theta_3, ..., \theta_d)$ that describes the classifier.
+The inner product $<x, \theta > = \theta_1x_1 + \theta_2x_2 + \theta_3x_3 + ... + \theta_dx_d$
+
+The task of a classification is given a vector of features x that describes the measurements, assign a label y of either +1 or -1.
+We are going to do that based on a training set. A training set consists of pairs of measurements vector and response.
+In this case we will have a training set of n pairs.
+$$
+  (x^{(1)}, y^{(1)}), (x^{(2)}, y^{(2)}), (x^{(3)}, y^{(3)}), ... , (x^{(n)}, y^{(n)})
+$$
+Each pair is a situation described by $x$ and a label described by $y$. This is usually gathered from historic data.
+
+## Linear Classifiers
+
+Linear classifiers have the form: $y = sign(<\theta, x>)$
+That is, the predicted label of the vector x is the sign of the inner product of that vector with
+another vector ?? that is called the parameter vector of the classifier. If hx, ??i is positive the
+predicted class is +1 and if it is negative the predicted class is -1.
+The vector ?? is a parameter vector describing the classifier. If we change the vector ?? it will change the classifier, and the goal of the training process is to use the training data, the n pairs that we saw before, to come up or to learn a good vector ?? that will work well in predicting future outcomes.
+
+Let's see what are the advantages of linear classifiers :
+- They are easy to train
+- Prediction can be very quick
+- Well known statistical theory of linear classifiers leading to effective modeling strategies
+
+Linear classifiers are particularly useful at high dimensions due to their simplicity, attractive computational load and to some nice statistical properties.
+
+## Maximum Likelihood Estimator (MLE)
+
+$$
+  
+  \hat{\theta}_{MLE} = \underset{\theta}{\arg\max}  P_{\theta}(Y=y^{(1)} |X=x^{(1)}) ... P_{\theta}(Y=y^{(n)} | X = x^{(n)})
+
+$$
+
+The maximum likelihood estimator is the $\theta$ that maximizes the likelihood of the data. The likelihood of the data is the data product of the conditional probabilities of the labels given the feature vectors where we take a product over all the probabilities of the training data pairs.
+
+$$
+  \hat{\theta}_{MLE} = \underset{\theta}{\arg\max}  \log{P_{\theta}(Y=y^{(1)} |X=x^{(1)})} ... \log{P_{\theta}(Y=y^{(n)} | X = x^{(n)})}
+$$
+
+Because log is a concave function, the maximizer of the product will be the same as the maximizer of the log of the product. But the product and the log of the product of the maximum will be different, but the maximizer, meaning the state of this maximizer's the product and the state of this maximizer's the log of the product will be the same.

@@ -1,0 +1,166 @@
+---
+title: "Project"
+author: "Sneiba"
+date: "12/22/2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Include all the necessary libraries.
+
+```{r}
+
+library(nlme)
+library(Matrix)
+library(glmnet)
+library(mlbench)
+library(corrplot)
+library(Metrics)
+library(lattice)
+library(ggplot2)
+library(caret)
+library(psych)
+
+```
+
+## Dataset Description
+
+The dataset i will study, is provided by the Federal Reserve Economic Data. It contains information of economical data in the USA from 01/04/1980 to 02/04/2000 on a weekly basis.
+There are 1049 observation with 16 variables. This tell us that it is a multiple regression of supervised learning problem. The goal of this project is to find the best model fitting which is well-predict to our target variable which is "1-Month CD Rate".
+
+
+### Importation
+
+```{r}
+db <- read.table("~/Desktop/Work/MOOC/MRR/dataset/TR.dat", header = FALSE)
+names(db)[1]<-"TWE"
+names(db)[2]<-"1YM"
+names(db)[3]<-"30YM "
+names(db)[4]<-"3MA"
+names(db)[5]<-"3MS"
+names(db)[6]<-"3YM"
+names(db)[7]<-"5YM"
+names(db)[8]<-"BCA"
+names(db)[9]<-"CCS"
+names(db)[10]<-"DDB"
+names(db)[11]<-"EFF"
+names(db)[12]<-"M1S"
+names(db)[13]<-"TCD"
+names(db)[14]<-"TLL"
+names(db)[15]<-"TSD"
+names(db)[16]<-"1MCD"
+```
+
+## Summary
+Let's look a summary of the dataset
+```{r}
+summary(db)
+```
+
+## Correlation Plot
+
+```{r}
+corrplot(cor(db),method="number",number.cex=0.5, main="Correlation Plot")
+```
+
+To analyze the link between the target variable and the explanatory variables, we plotted the correlation matrix between all variables in the data set.
+We notice that some financial features such as the treasury maturity rate, the conventional mortgage rate seems to be highly and positively correlated with our target variable.On the other hand the total loans and leases of all commercial banks and the total checkable deposits are negatively correlated with our target variable 1 Month CD rate.
+There is also some explanatory variables with a correlation coefficient nearly equal to 1 such as "3-Month Treasury Bill Rate-Auction Average" and "3-Month Treasury Bill Rate-Secondary Market". This can tell us that these two variable contains the same information.
+
+```{r}
+scatter.smooth(x=db$`1YM`, y=db$`1MCD`, main="1MCD en fonction de 1YM")
+```
+
+## Linear Model
+
+```{r}
+mean=mean(db[,16])
+n=nrow(db)
+size_training=floor(0.75*n)
+index_training=sample(1:n, size_training)
+index_test=seq(1:n)[!seq(1:n)%in%index_training]
+tab_training=db[index_training,]
+tab_test=db[index_test,]
+linearmodel=lm(db$`1MCD`~.,data=db)
+coef(linearmodel)
+summary=summary(linearmodel)
+summary
+plot(linearmodel)
+densityplot(summary$residuals,plot.points=FALSE,type = c("percent", "count", "density"))
+hist(summary$residuals)
+ypred=predict(linearmodel,db[,-16])
+summary(ypred)
+
+train_control <- trainControl(method="cv", number=10)
+model <- train(`1MCD`~., data=db, trControl=train_control, method="lm")
+b=summary(model)
+model$results
+densityplot(b$residuals,plot.points=FALSE,type = c("percent", "count", "density"))
+hist(b$residuals)
+ypred=predict(model,db[,-16])
+summary(ypred)
+```
+
+##Feature Selection
+###Backward
+```{r}
+regbackward=step(linearmodel,direction='backward')
+summary(regbackward)
+ypred2=predict(regbackward,db[,-16])
+summary(ypred2)
+rmse(ypred2,db$`1MCD`)
+```
+###Forward
+```{r}
+regforward=step(linearmodel,direction='forward')
+summary(regforward)
+ypred3=predict(regforward,db[,-16])
+summary(ypred3)
+rmse(ypred3,db$`1MCD`)
+```
+
+
+###Stepwise
+```{r}
+regboth=step(linearmodel,direction='both')
+summary(regboth)
+ypred4=predict(regboth,db[,-16])
+summary(ypred4)
+rmse(ypred4,db$`1MCD`)
+```
+
+
+### Variable Importance
+
+```{r}
+# estimate variable importance
+importance <- varImp(model, scale=FALSE)
+# summarize importance
+print(importance)
+# plot importance
+plot(importance)
+```
+
+#Lasso
+
+```{r}
+x=model.matrix(`1MCD`~.-1,data=db)
+y=db$`1MCD`
+lasso_model_cv=cv.glmnet(x,y,alpha=1)
+?cv.glmnet
+best_model_index=which(lasso_model_cv$lambda==lasso_model_cv$lambda.min)
+lasso_model_cv$glmnet.fit$beta[,best_model_index]
+
+lasso <- train(`1MCD`~.,tab_training,method='glmnet',tuneGrid=expand.grid(alpha=1,lambda=seq(0.0001, 1, length=5)))
+
+predictions <- predict(lasso_model_cv, x, type="link")
+mse <- mean((y - predictions)^2)
+mse
+mse/moyenne
+```
+```{r}
+plot(lasso_model_cv,main='choix du meilleur Lambda')
+```

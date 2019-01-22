@@ -1,0 +1,376 @@
+---
+title: "Data Visualization"
+author: "Sneiba"
+date: "10/12/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+In this course we will work on Data Visualization
+
+We will use both graphics and ggplot2 to plot our data. These two libraries are the most popular in R. We will also use the GGally library later on.
+Graphics is loaded by default in the scope. However the ggplot2 library and GGally must be loaded into the scope in order for us to use it.
+
+```{r}
+  library(ggplot2)
+```
+
+Now let's load the data from the data set faithful
+
+```{r}
+  data("faithful")
+  str(faithful)
+```
+
+We can see that faithful has 2 variables the erruption time and waiting time (both in minutes) of the old Faithful geyser in Yellowstone National Park, Wyoming, USA.
+
+### 1 Strip plots
+
+We can plot strip plots by using the plot function of the graphics library.
+
+```{r}
+  plot(faithful$eruptions, xlab="Sample Number", ylab = "eruption times(min)", main = "Old Faithful Eruption Times")
+
+```
+
+We can conclude from this graph that Old Faithful has two typical eruption times.
+
+
+### 2 Histograms
+
+Histograms graph one-dimensional numeric data by dividing the range into bins width and counting the number of occurences in each bin.
+The width of the bins influences the level of detail of the plot. Very narrow bins maintain all the information present in the data but are hard to draw conclusions from, as the histogrsam become more equivalent to a sorted list of data values. Very Wide bins lose informations to overly aggressive smoothing. Unlike strip plots that contain all the information present in the data. A good bin width balances information loss with useful data aggregation. Unlike strip plots that contain all of the information present in the data, histograms discard the ordering of the data point and treat samples in the same bin as identical.
+
+To plot a histogram we can use the hist function in the graphics library.
+
+```{r}
+  hist(faithful$eruptions,
+       breaks = 20,
+       xlab= "erruption times (min)",
+       ylab = "count",
+       main = "")
+```
+But we can also use the qplot function that is in the ggplot2 library.
+
+```{r}
+  qplot(
+    x = waiting,
+    data = faithful,
+    binwidth = 3,
+    main = "Waiting time to next eruption (min)"
+  )
+```
+We can also use the ggplot function of the ggplot2 library to make a histogram.
+In order to do that we have to have to pass an object return from the aes function, and add a histogram geometry layer using the + operator.
+
+```{r}
+  ggplot(faithful, aes(x = waiting)) + geom_histogram(binwidth = 3)
+```
+
+As you can see we get the exact same plot.
+
+Traditionally, the y axis in a histogram displays counts. An alternative is to display the frequency by surrounding the data variable with .. on both side.
+
+
+### 3 Line Plots
+
+A line plot is a graph that displays a relation between x and y as a line in a Cartesian coordinate system.
+Th relation may correspond  to an abstract mathematical function or to a relation between two samples (for example, dataframe columns).
+
+The function curve in the graphics package displays mathematical functions.
+In the example below, the first line defines a new function called sinc while the second line plots it.
+
+```{r}
+  sinc = function(x) {
+    return (sin(pi*x) / (pi*x))
+  }
+curve(sinc, -7, +7)
+```
+
+Another example using qplot and ggplot:
+
+```{r}
+  x = seq(-2, 2, length.out = 100)
+y = x ^ 2
+qplot(x, y, geom = "line") #line plot
+qplot(x, y, geom = c("line", "point"))
+
+df = data.frame(x = x, y = y)
+
+ggplot(df, aes(x=x, y=y)) + geom_line() + geom_point() # same as above but with ggplot function
+```
+
+Let's try to do another example using the plot function.
+For this example we will need the mtcars dataset
+
+```{r}
+data("mtcars")
+str(mtcars)
+```
+
+```{r}
+  S = sort.int(mpg$cty, index.return = T)
+plot(
+  S$x,
+  type = "l", # to specify it's a line plot
+  lty = 2, # Style of the line solid, dash, ...
+  xlab = "sample number sorted by city mpg",
+  ylab = "mpg"
+)
+lines(mpg$hwy[S$ix], lty=1)
+legend("topleft", c("highway mpg", "city mpg"), lty = c(1,2))
+```
+
+### 4 Smoothed Histograms
+
+A smoothed histogram is like an histogram, but instead of showing bins of specific width and height, it shows a curve
+
+Denoting n values by $x^{(1)} . . . , x^{(n)} $, the smoothed histogram is the following function $f_h : \mathbb{R} \rightarrow \mathbb{R}_+$
+
+$$ f_h(x) = \frac {1}{n}\sum_{i=1}^{n}{K_h(x-x^{(i)})}$$
+
+Where the kernet function $K_h : \mathbb{R} \rightarrow \mathbb{R}$ typically achieves it maximum at 0, and decreases as $\mid  x-x^{(i)} \mid$ increases. We also assume that the kernel function integrates to one $ f K_h(x)dx=1$ and satisfies the relation
+
+$$K_h(r) = h^{-1}K_1(r/h)$$
+
+We refer to $K_1$ as the base form of the kernel and denote it as $K$ 
+
+Four popular kernel choices are the Tricube, triangular, uniform, and Gaussian kernels, defines as $K_h(r)=x^{-1}K(r/h)$ where the $K(.)$ functions are respectively
+$$ K(r) = (1 - {\mid r\mid}^3)^3 . 1 _{{\mid r \mid < 1}} (Tricube)$$
+
+$$ K(r) = (1 - {\mid r\mid})^3 . 1 _{\mid r \mid < 1}  (Triangular)$$
+$$ K(r) = 2^{-1} . 1_{\mid r\mid<1} (Uniform)$$
+
+$$ K(r) = e^{-x^{2} / 2}/\sqrt{2\pi} (Gaussian)$$ 
+
+As $h$ increases the kernel functions $K_h$ become wider.
+
+Let's try an example with the faitful waiting histogram
+```{r}
+  ggplot(faithful,
+        aes(x=waiting, y=..density..)) + geom_histogram(alpha = 0.3) + geom_density(size = 1,color="red" )
+```
+
+### 5 Scatter Plots
+
+A scatter plot graphs the relationships between two numeric variables. It graphs each pair of variables as a point in a two dimensional space whose coordinates are the  corresponding  x,y values.
+
+Example with the faithful data set.
+
+```{r}
+  plot(faithful$waiting,
+       faithful$eruptions,
+       pch=25, #type of marker
+       col=3, # color
+       cex=1.2, # the size
+       xlab="Waiting time (min)",
+       ylab="Eruption time (min)")
+
+```
+
+We see again an interesting situation where we have two clear clusters.
+First cluster have a short wait time and a short eruption time where as the second cluster have a short wait time and a short erruption time. This makes sense , because if the gazer takes longer time before it erupts, meaning the wait time is longer, more pressure builds up and the eruption is longer.
+
+Now Let's load two more data sets mtcars and mpg
+
+```{r}
+  data("mtcars")
+  data("mpg")
+  installed.packages('GGally')
+```
+
+### 6 Variable Relationships and Scatter Plots
+
+The relationship between two numeric variables and a categorical variable can be graphed using a scatter plot where the categorical variable controls the size, or the shape of the markers.
+
+We are gonna use next the model mtcars which has model names, weight, horsepower, fuel efficiency, and tramission type of cars from 1974 Motor Trend Magazine.
+
+
+The goal of this graph is to show the relationship between two numeric variables horsepower and miles per gallon but also to show the relationship between these two variables in the transmission marked here by the am column in the dataframe.
+
+```{r}
+  plot(mtcars$hp,
+       mtcars$mpg,
+       pch = mtcars$am, # the markers now depend on the column mtcars$am of the mtmcars dataset
+       xlab = "horsepower",
+       col = 2,
+       cex = 1.2, # The size
+       ylab = "miles per gallon",
+       main = "mpg vs .hp by transmission"
+       )
+  legend("topright", c("automatic", "manual"), pch =c(0, 1))
+```
+
+We can see that there is an inverse relationship between horsepower and mpg. The higer the horse power gets, the lower the miles per gallon is. This means that cars with higher horsepower tend to be more fuel hungry. We also notice that for a given horse power, manual cars tend to be more efficient and that cars with highest horsepower tend to be manual.
+
+### 7 Multivariate Scatter Plots
+
+Now let's take a look at the mpg dataset which looks very similar to mtcars datset but is larger and newer. It holds the fuel economy and other car attributes from fueleconomy.gov website.
+
+```{r}
+  names(mpg)
+```
+
+In this example we are going to change the marker size to reveal a relationship between three different numeric variables in a scatter plot. Because scatter plot are two-dimensional, we need to use the marker size to reflect the third variable. Here is how we can do it using the qplot function.
+
+```{r}
+  qplot(
+    x = wt,
+    y = mpg,
+    data = mtcars,
+    size = cyl,
+    main = "MPG vs. Weight (x1000lbs) by cylinder"
+  )
+```
+
+We can see that there is an inverse relationship between the weight variable and the miles per galon variable. In fact heavier cars tends to have a lower miles per gallon. We also see, the heavier cars tends to have more cylinders.
+
+### 8 Noisy Data
+
+In many cases the data contains a large amount of noise, and graphing it may focus the viewer's attention on the noise while hiding important general trends.
+One technique to address this issue is to add a smoothed line curve $y_s$, which is a weighted average of the original data $(y^{(i)}, x^{(i)})$ $i = 1, ..., n$ :
+
+$$
+  y_s(x) = \sum^{n}_{i=1}{\frac{K_h(x-x^{(i)})}{\sum^{n}_{i=1}{K_h(x-x^{(i)})}}y^{(i)}}
+$$
+In other words, $y_s(x)$ is an average the $y^{(i)}$ values, weighted in a way that emphasizes $y^{i}$ values whose corresponding $x^{(i)}$ values are close to $x$. The denominator in the definition of $y_s$ ensures that the weigths defining the weighted average sum to 1.
+
+The equation describes a statistical technique known as locally constant regression that can be used to estimate a relationship between x and y without making parametric assumptions (for example the assumption of a linear relationship)
+
+```{r}
+  qplot(disp, 
+        mpg,
+        data = mtcars,
+        main = "MPG vs Eng. Displacement"
+        ) + stat_smooth(method = "loess",
+                        method.args = list(degree = 0),
+                        span = 0.2,
+                        se = FALSE)
+```
+
+### 9 Facets
+
+In some cases we want to examine multiple plots with the same $x$ or $y$ axes in different side-by-side panels. The function qplot enables this using the facets argument which takes a formula of the form $a \sim b$ and creates multiple rows and columns of panels ( a determines the row variable and b the columns variable).
+First we need to modify the mtcars dataframe to have new columns with more appropriate names for better axes labeling :
+```{r}
+  mtcars$amf[mtcars$am==0] = 'automatic'
+  mtcars$amf[mtcars$am==1] = 'manual'
+  mtcars$vsf[mtcars$vs==0] = 'flat'
+  mtcars$vsf[mtcars$vs==1] = 'V-shape'
+```
+
+Now let's plot the face using the qplot function from ggplot2 library
+
+Let's plot by transmission
+
+```{r}
+  qplot(
+    x = wt,
+    y = mpg,
+    facets = .~amf,
+    data = mtcars,
+    main = "MPG vs. Weight by transmission"
+  )
+```
+
+Let's plot by engine
+
+```{r}
+  qplot(x=wt,
+        y = mpg,
+        facets = vsf~.,
+        data = mtcars,
+        main = "MPG vs. weight by engine") + stat_smooth(se=FALSE)
+```
+
+Let's plot by transmission and engine
+
+```{r}
+  qplot(x = wt,
+        y = mpg, 
+        facets = vsf~amf,
+        data = mtcars,
+        main = "MPG vs. weight by transmission and engine") + stat_smooth(se=FALSE)
+```
+
+The function plot can create a similar array of panels with synchronized axes scales when it receives an entire dataframe as an argument. We demonstrate this below by exploring all-pairs relationships between city mpg, highway mpg, and engine displacement volume.
+
+```{r}
+  DF = mpg[,c("cty", "hwy", "displ")]
+  plot(DF, main="City mpg vs. Highway mpg vs. Engine volume")
+```
+
+We can also do the same with GGally library.
+
+```{r}
+  DF = mpg[,c("cty", "hwy", "displ")]
+  library("GGally")
+  ggpairs(DF)
+```
+
+### 10 Contour Plots
+
+Contour plots graph a relationship between three numeric variables, z as a function of x,y.
+
+The most convenient way to graph a two dimensional function $f(x,y)$ is by graphing its equal height contours :
+
+$$
+  z_c = {(x,y) \in \mathbb{R}^2 : f(x,y) = c}
+$$
+
+for different values of c. To graph such a function with the ggplot2 package, create a dataframe with columns corresponding to the x, y, and z values. The x and y columns should feature all possible combinations of the two coordinates over a certain grid. Then call ggplot and the stat_contour layer. Here are the steps :
+* Step 1: Create a grid for the x values
+* Step 2: Create an grid for the y values
+* Step 3: Create an exapanded grid x by y grid
+* Step 4: Compute values of z on the expanded grid
+* Step 5: Graph the data
+
+Example :
+
+```{r}
+  x_grid = seq(-1, 1, length.out = 100)
+  y_grid = x_grid
+  R = expand.grid(x_grid, y_grid)
+  names(R) = c('x', 'y')
+  R$z = R$x^2 + R$y^2
+  ggplot(R,aes(x=x, y=y, z=z)) + stat_contour()
+```
+
+
+### 11 Box Plots
+
+Box plots are alternatives to histograms that are usually more lossy, in the sense that they lose more data. But they emphasize quantiles and outliers in a way a histogram cannot. Sometimes a histogram is more useful, but in other cases, boxplots are more useful and they reveal information that a histogram does not have.
+
+The r-percentile of a numeric dataset is the point at which approximately r-percent of the data lie underneath, and approximately 100-r percent lie above. The median or 50 percentile is the point at which half of the data lies underneath and half above. The 25-percentile and 75 percentile are the values below which 25% and 75% of the data lie. These points are also called the first and the third quartiles is called the median.
+
+Now let's create a box plot denoting the IQR and inner line bisecting the box denoting the median
+```{r}
+  ggplot(mpg, aes("", hwy)) + geom_boxplot() + coord_flip() + scale_x_discrete("")
+  ggplot(mpg, aes(reorder(class, -hwy, median), hwy)) +
+geom_boxplot() +
+coord_flip() +
+scale_x_discrete("class")
+```
+
+### 13 QQPlots
+
+A QQPlot is a scatter plot of quantiles of one data set on the x-axis versus the quantiles of the other data set on the y axis. In some cases the x or the y axis describes quantiles coming from a theoretical distribution rather than specific data set. Let's see at first an example of how to compute a QQPlot in R using the GGPlot tool package. In this case we call the function GGPlot, we need to use the aes function and we add stat_qq layer.
+
+```{r}
+  D = data.frame(samples = c(rnorm(200, 1, 1),
+                             rnorm(200, 0, 1),
+                             rnorm(200, 0, 2)))
+  D$parameter[1:200] = 'N(1,1)';
+  D$parameter[201:400] = 'N(0,1)';
+  D$parameter[401:600] = 'N(0,2)';
+  qplot(samples, facets = parameter~., geom = 'histogram', data = D)
+  
+  
+  ggplot(D, aes(sample = samples)) + stat_qq() + facet_grid(.~parameter)
+  
+```
