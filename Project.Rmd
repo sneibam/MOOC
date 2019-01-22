@@ -153,14 +153,15 @@ lasso_model_cv=cv.glmnet(x,y,alpha=1)
 ?cv.glmnet
 best_model_index=which(lasso_model_cv$lambda==lasso_model_cv$lambda.min)
 lasso_model_cv$glmnet.fit$beta[,best_model_index]
-
 lasso <- train(`1MCD`~.,tab_training,method='glmnet',tuneGrid=expand.grid(alpha=1,lambda=seq(0.0001, 1, length=5)))
 
 predictions <- predict(lasso_model_cv, x, type="link")
 mse <- mean((y - predictions)^2)
 mse
-mse/moyenne
-```
-```{r}
-plot(lasso_model_cv,main='choix du meilleur Lambda')
+mse/mean
+
+plot(lasso,main='RMSE en fonction de Lambda')
+plot(lasso$finalModel, xvar = "lambda", label = T)
+plot(lasso$finalModel, xvar = 'dev', label=T)
+plot(varImp(lasso,scale=F),main='Importance des variables')
 ```
